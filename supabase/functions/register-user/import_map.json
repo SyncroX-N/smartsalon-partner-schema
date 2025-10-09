@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "supabase": "https://esm.sh/@supabase/supabase-js@2.39.0",
+    "cors": "../_shared/cors.ts",
+    "security": "../_shared/security.ts",
+    "types": "../_shared/types.ts"
+  }
+}

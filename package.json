@@ -1,0 +1,38 @@
+{
+  "name": "supabase-drizzle-project",
+  "version": "1.0.0",
+  "description": "A well-organized full-stack project with separate workspaces for database schema management and Supabase Edge Functions",
+  "main": "index.js",
+  "workspaces": [
+    "database",
+    "src"
+  ],
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "echo \"Use workspace-specific scripts or open the VS Code workspace\"",
+    "workspace": "code edge-functions.code-workspace",
+    "setup": "npm install && cd database && npm install",
+    "db:generate": "cd database && npm run db:generate",
+    "db:push": "cd database && npm run db:push",
+    "db:studio": "cd database && npm run db:studio",
+    "functions:serve": "supabase functions serve",
+    "functions:deploy": "supabase functions deploy",
+    "generate:types": "npx supabase gen types typescript --project-id ocvnrhwtcdoazzzdnzpz --schema public > database.types.ts"
+  },
+  "keywords": [
+    "supabase",
+    "drizzle",
+    "postgresql",
+    "edge-functions",
+    "typescript"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "supabase": "^2.23.4"
+  }
+}

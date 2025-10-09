@@ -1,0 +1,33 @@
+{
+  "folders": [
+    {
+      "name": "project-root",
+      "path": "./"
+    },
+    {
+      "name": "database-schema",
+      "path": "./database"
+    },
+    {
+      "name": "supabase-functions",
+      "path": "./supabase/functions"
+    }
+  ],
+  "settings": {
+    "files.exclude": {
+      "node_modules/": true,
+      "database/": true,
+      "supabase/functions/": true,
+      "src/": true
+    },
+    "deno.enable": false,
+    "typescript.preferences.includePackageJsonAutoImports": "off"
+  },
+  "extensions": {
+    "recommendations": [
+      "denoland.vscode-deno",
+      "bradlc.vscode-tailwindcss",
+      "ms-vscode.vscode-typescript-next"
+    ]
+  }
+} 

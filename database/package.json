@@ -1,0 +1,35 @@
+{
+  "name": "database-schema",
+  "version": "1.0.0",
+  "description": "Database schema management with Drizzle ORM",
+  "main": "index.js",
+  "scripts": {
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio",
+    "db:migrate": "drizzle-kit migrate",
+    "db:check": "ts-node test-connection.ts",
+    "fixtures:mock-customers": "ts-node fixtures/create-mock-customers.ts",
+    "fixtures:cleanup-mocks": "ts-node fixtures/create-mock-customers.ts cleanup",
+    "fixtures:mock-services": "ts-node fixtures/create-location-services.ts",
+    "fixtures:mock-macro-services": "ts-node fixtures/create-macro-service-structure.ts"
+  },
+  "keywords": [
+    "drizzle",
+    "postgresql",
+    "schema"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "drizzle-orm": "^0.43.1",
+    "postgres": "^3.4.7",
+    "dotenv": "^16.5.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "drizzle-kit": "^0.31.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.8.3"
+  }
+}

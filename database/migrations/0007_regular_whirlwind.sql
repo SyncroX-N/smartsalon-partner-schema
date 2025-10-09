@@ -1,0 +1,1 @@
+ALTER TABLE "LocationService" ADD COLUMN "imageUrl" text;

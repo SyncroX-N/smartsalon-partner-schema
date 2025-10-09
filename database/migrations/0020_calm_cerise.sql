@@ -1,0 +1,1 @@
+ALTER TABLE "StaffScheduleOverride" ALTER COLUMN "operatingHours" DROP NOT NULL;

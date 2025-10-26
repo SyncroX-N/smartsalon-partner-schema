@@ -2,8 +2,8 @@ import { db } from "../db/index";
 import { user, locationCustomer } from "../db/schema";
 import { sql } from "drizzle-orm";
 
-const COMPANY_ID = "81e0a4cb-2237-49ef-b0ba-5c43782594bd";
-const LOCATION_ID = "3909680c-6ee8-4b22-86f6-b68a54477042";
+const COMPANY_ID = "a70031cb-3f47-43ba-9bd0-05c4facab918";
+const LOCATION_ID = "2a416539-66cc-4d12-a956-22f1d91aa574";
 
 // Mock customer data with predefined UUIDs
 const mockCustomers = [

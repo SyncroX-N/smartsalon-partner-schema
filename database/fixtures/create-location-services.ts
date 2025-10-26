@@ -7,7 +7,7 @@ import {
 import { sql } from "drizzle-orm";
 
 // Sample location ID - replace with actual ID from your database
-const LOCATION_ID = "3909680c-6ee8-4b22-86f6-b68a54477042";
+const LOCATION_ID = "2a416539-66cc-4d12-a956-22f1d91aa574";
 
 // Example location-specific services for a hair salon
 const sampleLocationServices = {
@@ -179,7 +179,9 @@ async function createLocationServices() {
             ? ` (linked to: ${generalService.name})`
             : " (no general service link)";
           console.log(
-            `    ✅ Created service: ${serviceData.name} ($${(serviceData.priceAmount / 100).toFixed(2)})${serviceTypeInfo}`
+            `    ✅ Created service: ${serviceData.name} ($${(
+              serviceData.priceAmount / 100
+            ).toFixed(2)})${serviceTypeInfo}`
           );
           totalServices++;
         }

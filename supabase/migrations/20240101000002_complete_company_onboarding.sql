@@ -3,7 +3,7 @@
 -- Including auth metadata updates and location creation
 
 -- Drop existing function if it exists
-DROP FUNCTION IF EXISTS complete_company_onboarding_transaction(text,text,uuid,text,text[],text[],text,uuid,text);
+DROP FUNCTION IF EXISTS complete_company_onboarding_transaction(text,text,uuid,text,text[],text[],text,uuid,text,text,text,numeric,numeric,text,text,text,text,text,text,text,text,text[]);
 
 CREATE OR REPLACE FUNCTION complete_company_onboarding_transaction(
   p_account_type TEXT,
@@ -94,6 +94,28 @@ BEGIN
     'true'::jsonb
   )
   WHERE id = p_user_id;
+  
+  -- Step 4: Create default location access for the company admin
+  -- Grant ADMIN role with all permissions enabled
+  INSERT INTO "UserLocationAccess" (
+    "userId",
+    "locationId",
+    "role",
+    "permissions"
+  )
+  VALUES (
+    p_user_id,
+    location_record.id,
+    'ADMIN'::"LocationRole",
+    json_build_object(
+      'canManageBookings', true,
+      'canManageCustomers', true,
+      'canManageServices', true,
+      'canViewReports', true,
+      'canManageEmployees', true,
+      'canManageSettings', true
+    )
+  );
   
   -- Return success result
   result := json_build_object(

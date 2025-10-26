@@ -98,6 +98,9 @@ export const company = pgTable("Company", {
   secondarySpecialisations: companySpecialisation(
     "secondarySpecialisations"
   ).array(),
+  stripeAccountId: text().unique(),
+  payoutsEnabled: boolean().default(false),
+  chargesEnabled: boolean().default(false),
   size: companySize("size"),
   businessName: text(),
   country: text(),
@@ -129,9 +132,6 @@ export const companyRelations = relations(company, ({ many }) => ({
 
 export const location = pgTable("Location", {
   id: uuid().notNull().primaryKey().defaultRandom(),
-  stripeAccountId: text(),
-  stripeDashboardUrl: text(),
-  payoutsEnabled: boolean().default(false),
   name: text(),
   address: text(),
   phoneNumber: text(),
@@ -223,6 +223,41 @@ export const locationRelations = relations(location, ({ one, many }) => ({
   closures: many(locationClosure),
 }));
 
+export const locationRole = pgEnum("LocationRole", [
+  "ADMIN",
+  "MANAGER",
+  "STAFF",
+  "VIEW_ONLY",
+]);
+
+export const userLocationAccess = pgTable(
+  "UserLocationAccess",
+  {
+    id: uuid().defaultRandom().primaryKey(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    locationId: uuid("locationId")
+      .notNull()
+      .references(() => location.id, { onDelete: "cascade" }),
+    role: locationRole("role").notNull().default("STAFF"),
+    permissions: json("permissions").$type<{
+      canManageBookings?: boolean;
+      canManageCustomers?: boolean;
+      canManageServices?: boolean;
+      canViewReports?: boolean;
+      canManageEmployees?: boolean;
+      canManageSettings?: boolean;
+    }>(),
+    createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp({ withTimezone: true })
+      .defaultNow()
+      .$onUpdate(() => new Date())
+      .notNull(),
+  },
+  (t) => [uniqueIndex("user_location_access_unique").on(t.userId, t.locationId)]
+);
+
 export const user = pgTable(
   "User",
   {
@@ -246,14 +281,6 @@ export const user = pgTable(
     imageUrl: text(),
     dateOfBirth: date("dateOfBirth"),
     color: text().default("#FF69B4").notNull(),
-    permissions: json("permissions").$type<{
-      canManageBookings?: boolean;
-      canManageCustomers?: boolean;
-      canManageServices?: boolean;
-      canViewReports?: boolean;
-      canManageEmployees?: boolean;
-      canManageSettings?: boolean;
-    }>(),
     operatingHours: jsonb("operatingHours")
       .$type<RegularSchedule>()
       .default(

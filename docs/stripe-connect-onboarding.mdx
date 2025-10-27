@@ -1,0 +1,141 @@
+### Stripe Connect Onboarding (Frontend Guide)
+
+This guide explains how the frontend should start Stripe Connect onboarding and reflect onboarding state using fields persisted on `Company`.
+
+### What the backend provides
+
+- Edge Function: `create-stripe-account-link` (POST)
+- Webhook: updates `Company` when Stripe emits `account.updated` and `capability.updated`
+
+### Relevant Company fields
+
+- `stripeAccountId: string | null`
+- `payoutsEnabled: boolean`
+- `chargesEnabled: boolean`
+- `stripeDetailsSubmitted: boolean`
+- `stripeOnboardingStatus: 'NOT_CREATED' | 'REQUIRES_ACTION' | 'PENDING_VERIFICATION' | 'ACTIVE' | 'RESTRICTED' | null`
+- `stripeRequirementsDue: {
+    currentlyDue?: string[];
+    eventuallyDue?: string[];
+    pastDue?: string[];
+    pendingVerification?: string[];
+    disabledReason?: string | null;
+  } | null`
+- `stripeCardPaymentsCapability: 'active' | 'inactive' | 'pending' | null`
+- `stripeTransfersCapability: 'active' | 'inactive' | 'pending' | null`
+
+### Start onboarding (open Stripe Account Link)
+
+Call the function and redirect the user to the returned `url`.
+
+```ts
+// POST https://<PROJECT>.supabase.co/functions/v1/create-stripe-account-link
+// Auth: Bearer <supabase access token>
+
+interface CreateStripeAccountLinkBody {
+  companyId: string;
+  returnUrl: string; // current app URL to return to
+}
+
+interface StripeAccountLinkResponse {
+  url: string;
+  expires_at: number;
+}
+
+async function openStripeOnboarding({ companyId, returnUrl }: CreateStripeAccountLinkBody) {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/create-stripe-account-link`,
+    {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${supabase.auth.getSession().then(s => s.data.session?.access_token ?? '')}`,
+      },
+      body: JSON.stringify({ companyId, returnUrl }),
+    }
+  );
+
+  if (!res.ok) throw new Error('Failed to create account link');
+  const data = (await res.json()) as StripeAccountLinkResponse;
+  window.location.assign(data.url);
+}
+```
+
+Notes:
+- The backend creates a Stripe account (if missing) and stores `stripeAccountId`.
+- The link resumes incomplete onboarding automatically.
+
+### After returning from Stripe
+
+On page load after redirect, refetch the `Company` row by `id` and render based on the fields above. The webhook will have updated the record shortly after Stripe changes.
+
+```ts
+interface CompanyStripeState {
+  payoutsEnabled: boolean;
+  chargesEnabled: boolean;
+  stripeDetailsSubmitted: boolean;
+  stripeOnboardingStatus: 'NOT_CREATED' | 'REQUIRES_ACTION' | 'PENDING_VERIFICATION' | 'ACTIVE' | 'RESTRICTED' | null;
+  stripeRequirementsDue: {
+    currentlyDue?: string[];
+    eventuallyDue?: string[];
+    pastDue?: string[];
+    pendingVerification?: string[];
+    disabledReason?: string | null;
+  } | null;
+  stripeCardPaymentsCapability: 'active' | 'inactive' | 'pending' | null;
+  stripeTransfersCapability: 'active' | 'inactive' | 'pending' | null;
+}
+
+function isReady(state: CompanyStripeState): boolean {
+  return state.chargesEnabled && state.payoutsEnabled;
+}
+
+function needsAction(state: CompanyStripeState): boolean {
+  return state.stripeOnboardingStatus === 'REQUIRES_ACTION';
+}
+
+function isPendingVerification(state: CompanyStripeState): boolean {
+  return state.stripeOnboardingStatus === 'PENDING_VERIFICATION';
+}
+
+function isRestricted(state: CompanyStripeState): boolean {
+  return state.stripeOnboardingStatus === 'RESTRICTED';
+}
+```
+
+Recommended rendering logic:
+- Show “Ready to accept payments” when `isReady(state)`.
+- Show “Finish setup in Stripe” CTA when `needsAction(state)`; clicking it calls `openStripeOnboarding`.
+- Show “Verification pending” when `isPendingVerification(state)`.
+- Show “Account restricted” when `isRestricted(state)` and optionally surface `stripeRequirementsDue.disabledReason`.
+
+### Polling vs realtime
+
+- Minimum: refetch `Company` after returning from Stripe.
+- Optional: poll `Company` for a few seconds for late-arriving webhook updates.
+- If Supabase Realtime is enabled for `Company`, you can subscribe to changes on that row.
+
+### Capability hints
+
+Use capability fields for finer-grained UI hints:
+- `stripeCardPaymentsCapability === 'active'` → card payments permitted.
+- `stripeTransfersCapability === 'active'` → payouts capability active.
+
+### Error handling
+
+- If account link creation fails, show a generic error with retry.
+- If onboarding is repeatedly `REQUIRES_ACTION`, re-open onboarding link.
+- If `RESTRICTED`, display a warning; user will likely need to complete requirements in Stripe.
+
+### Security
+
+- Calls to the function must include the Supabase user Access Token in the `Authorization` header.
+- Only company admins associated to the `companyId` can create the link (enforced server-side).
+
+### QA checklist
+
+- First-time onboarding: button opens Stripe, returns, state becomes `ACTIVE` when finished.
+- Incomplete onboarding: returns `REQUIRES_ACTION`, CTA resumes where left off.
+- Pending checks: `PENDING_VERIFICATION` visible after return.
+- Restrictions: `RESTRICTED` rendered and reason shown if available.
+

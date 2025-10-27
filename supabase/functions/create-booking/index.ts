@@ -1,6 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "zod";
+import { createClient } from "supabase";
 
 // ---------- Schema ----------
 const createBookingSchema = z.object({
@@ -185,7 +184,7 @@ async function hasAnyStaffConflict(
 }
 
 // ---------- Handler ----------
-serve(async (req) => {
+Deno.serve(async (req) => {
   // CORS
   if (req.method === "OPTIONS") {
     return new Response(null, {
@@ -209,7 +208,11 @@ serve(async (req) => {
     // Supabase client
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    const supabase = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: {
+        persistSession: false,
+      },
+    });
 
     // Parse payload
     const body = await req.json();

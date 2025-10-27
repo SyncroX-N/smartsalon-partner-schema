@@ -1,6 +1,5 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+import { createClient } from "supabase";
+import Stripe from "stripe";
 
 interface CreateAccountLinkRequest {
   companyId: string;
@@ -12,7 +11,13 @@ interface StripeAccountLinkResponse {
   expires_at: number;
 }
 
-serve(async (req) => {
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+Deno.serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -37,32 +42,58 @@ serve(async (req) => {
       "STRIPE_SECRET_KEY:",
       Deno.env.get("STRIPE_SECRET_KEY") ? "SET" : "NOT_SET"
     );
+    console.log(
+      "SUPABASE_SERVICE_ROLE_KEY:",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ? "SET" : "NOT_SET"
+    );
     // Initialize Supabase client
     console.log("=== INITIALIZING SUPABASE CLIENT ===");
-    const supabaseClient = createClient(
+    const authHeader = req.headers.get("Authorization");
+    console.log("Auth header present:", !!authHeader);
+    console.log("Auth header value:", authHeader?.substring(0, 20) + "...");
+
+    if (!authHeader) {
+      console.log("No Authorization header provided");
+      return new Response(
+        JSON.stringify({ error: "Missing Authorization header" }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
+    }
+
+    // Extract JWT token from header
+    const token = authHeader.replace("Bearer ", "");
+
+    // Create admin client to verify JWT and get user
+    const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
       {
-        global: {
-          headers: { Authorization: req.headers.get("Authorization")! },
+        auth: {
+          persistSession: false,
         },
       }
     );
-    console.log("Supabase client created successfully");
 
-    // Get the user from the JWT token
-    console.log("=== AUTHENTICATING USER ===");
+    // Get user from JWT token using admin client
     const {
       data: { user },
-      error: authError,
-    } = await supabaseClient.auth.getUser();
-
-    if (authError || !user) {
-      console.log("Authentication failed:", authError);
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+      error: userError,
+    } = await supabaseAdmin.auth.getUser(token);
+    if (userError || !user) {
+      console.log("Authentication failed:", userError);
+      return new Response(
+        JSON.stringify({
+          error: "User not found",
+          details: userError?.message,
+        }),
+        {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        }
+      );
     }
     console.log("User authenticated successfully:", user.id);
 
@@ -84,7 +115,7 @@ serve(async (req) => {
     }
 
     // Verify the user has access to this company
-    const { data: company, error: companyError } = await supabaseClient
+    const { data: company, error: companyError } = await supabaseAdmin
       .from("Company")
       .select("id, stripeAccountId")
       .eq("id", companyId)
@@ -98,7 +129,7 @@ serve(async (req) => {
     }
 
     // Check if user is associated with this company
-    const { data: userCompany, error: userCompanyError } = await supabaseClient
+    const { data: userCompany, error: userCompanyError } = await supabaseAdmin
       .from("User")
       .select("companyId")
       .eq("id", user.id)
@@ -117,15 +148,10 @@ serve(async (req) => {
 
     // Initialize Stripe
     console.log("=== INITIALIZING STRIPE ===");
-    const stripe = new (await import("https://esm.sh/stripe@12.9.0")).default(
-      Deno.env.get("STRIPE_SECRET_KEY")!,
-      {
-        apiVersion: "2023-10-16",
-        httpClient: (
-          await import("https://esm.sh/stripe@12.9.0")
-        ).Stripe.createFetchHttpClient(),
-      }
-    );
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
+      apiVersion: "2024-11-20.acacia",
+      httpClient: Stripe.createFetchHttpClient(),
+    });
     console.log("Stripe initialized successfully");
 
     let stripeAccountId = company.stripeAccountId;
@@ -145,7 +171,7 @@ serve(async (req) => {
       stripeAccountId = account.id;
 
       // Update company with Stripe account ID
-      const { error: updateError } = await supabaseClient
+      const { error: updateError } = await supabaseAdmin
         .from("Company")
         .update({ stripeAccountId })
         .eq("id", companyId);

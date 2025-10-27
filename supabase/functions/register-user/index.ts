@@ -1,10 +1,27 @@
-import { serve } from "https://deno.land/std@0.182.0/http/server.ts";
 import { createClient } from "supabase";
-import {
-  handleCorsRequest,
-  createSuccessResponse,
-  createErrorResponse,
-} from "cors";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+function handleCorsRequest() {
+  return new Response("ok", { headers: corsHeaders });
+}
+
+function createSuccessResponse(data: any) {
+  return new Response(JSON.stringify(data), {
+    status: 200,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
+
+function createErrorResponse(message: string, status: number = 400) {
+  return new Response(JSON.stringify({ error: message }), {
+    status,
+    headers: { ...corsHeaders, "Content-Type": "application/json" },
+  });
+}
 
 interface RegistrationData {
   type: string;
@@ -18,7 +35,7 @@ interface RegistrationData {
   timezone: string;
 }
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return handleCorsRequest();
   }
@@ -42,7 +59,11 @@ serve(async (req: Request) => {
     }
 
     // Create admin client to verify JWT and get user
-    const supabaseAdmin = createClient(supabaseUrl, serviceKey);
+    const supabaseAdmin = createClient(supabaseUrl, serviceKey, {
+      auth: {
+        persistSession: false,
+      },
+    });
 
     // Get user from JWT token using admin client
     const {

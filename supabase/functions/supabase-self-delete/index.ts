@@ -1,12 +1,4 @@
-//disable TypeScript
-// @ts-nocheck
-
-// Follow this setup guide to integrate the Deno language server with your editor:
-// https://deno.land/manual/getting_started/setup_your_environment
-// This enables autocomplete, go to definition, etc.
-
-import { serve } from 'https://deno.land/std@0.182.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.14.0';
+import { createClient } from "supabase";
 
 export const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -16,7 +8,7 @@ export const corsHeaders = {
 
 console.log('Function "supabase-self-delete" up and running!');
 
-serve(async (req: Request) => {
+Deno.serve(async (req: Request) => {
   // This is needed if you're planning to invoke your function from a browser.
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -36,6 +28,9 @@ serve(async (req: Request) => {
         global: {
           headers: { Authorization: `Bearer ${token}` },
         },
+        auth: {
+          persistSession: false,
+        },
       }
     );
 
@@ -52,7 +47,12 @@ serve(async (req: Request) => {
     // Create admin client to delete the user
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      {
+        auth: {
+          persistSession: false,
+        },
+      }
     );
 
     console.log('Attempting to delete user:', user.id);

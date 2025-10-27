@@ -22,4 +22,7 @@ import_map = "./functions/import_map.json"
 
 [functions.supabase-self-delete]
 verify_jwt = true
-import_map = "./functions/import_map.json" 
+import_map = "./functions/import_map.json"
+
+[functions.stripe-connect]
+verify_jwt = false 

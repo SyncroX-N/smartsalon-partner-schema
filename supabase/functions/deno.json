@@ -1,7 +1,16 @@
 {
   "compilerOptions": {
-    "lib": ["deno.window", "deno.unstable"],
+    "lib": [
+      "deno.window",
+      "deno.unstable"
+    ],
     "strict": true
+  },
+  "imports": {
+    "supabase": "npm:@supabase/supabase-js@2",
+    "stripe": "npm:stripe@17",
+    "cors": "./_shared/cors.ts",
+    "stripeUtils": "./_shared/stripe-utils.ts"
   },
   "fmt": {
     "useTabs": false,
@@ -13,8 +22,9 @@
   },
   "lint": {
     "rules": {
-      "tags": ["recommended"]
+      "tags": [
+        "recommended"
+      ]
     }
   }
 }
-

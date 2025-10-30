@@ -26,3 +26,18 @@ import_map = "./functions/import_map.json"
 
 [functions.stripe-connect]
 verify_jwt = false 
+
+[functions.stripe-balance]
+verify_jwt = true
+
+[functions.stripe-payouts]
+verify_jwt = true
+
+[functions.stripe-payments]
+verify_jwt = true
+
+[functions.stripe-refunds]
+verify_jwt = true
+
+[functions.stripe-disputes]
+verify_jwt = true

@@ -64,6 +64,8 @@ export const timeSlotStrategy = pgEnum("TimeSlotStrategy", [
   "REDUCE_GAPS",
   "ELIMINATE_GAPS",
 ]);
+export const stripeCapabilityStatus = pgEnum("StripeCapabilityStatus", ['active', 'inactive', 'pending'])
+export const stripeOnboardingStatus = pgEnum("StripeOnboardingStatus", ['NOT_CREATED', 'REQUIRES_ACTION', 'PENDING_VERIFICATION', 'ACTIVE', 'RESTRICTED'])
 
 // types/scheduling.ts
 export type HHMM = `${number}${number}:${number}${number}`;
@@ -99,6 +101,11 @@ export const company = pgTable("Company", {
     "secondarySpecialisations"
   ).array(),
   stripeAccountId: text().unique(),
+	stripeDetailsSubmitted: boolean().default(false),
+	stripeOnboardingStatus: stripeOnboardingStatus(),
+	stripeRequirementsDue: jsonb(),
+	stripeCardPaymentsCapability: stripeCapabilityStatus(),
+	stripeTransfersCapability: stripeCapabilityStatus(),
   payoutsEnabled: boolean().default(false),
   chargesEnabled: boolean().default(false),
   size: companySize("size"),
@@ -248,6 +255,7 @@ export const userLocationAccess = pgTable(
       canViewReports?: boolean;
       canManageEmployees?: boolean;
       canManageSettings?: boolean;
+      canManageSales?: boolean;
     }>(),
     createdAt: timestamp({ withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp({ withTimezone: true })

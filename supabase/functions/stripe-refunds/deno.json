@@ -1,0 +1,10 @@
+{
+  "imports": {
+    "supabase": "npm:@supabase/supabase-js@2",
+    "stripe": "npm:stripe@17",
+    "cors": "../_shared/cors.ts"
+  }
+}
+
+
+

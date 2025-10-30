@@ -13,6 +13,7 @@
     "workspace": "code edge-functions.code-workspace",
     "setup": "npm install && cd database && npm install",
     "db:generate": "cd database && npm run db:generate",
+    "db:pull": "cd database && npm run db:pull",
     "db:push": "cd database && npm run db:push",
     "db:studio": "cd database && npm run db:studio",
     "functions:serve": "supabase functions serve",

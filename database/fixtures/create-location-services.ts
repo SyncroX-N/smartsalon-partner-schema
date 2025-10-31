@@ -7,7 +7,7 @@ import {
 import { sql } from "drizzle-orm";
 
 // Sample location ID - replace with actual ID from your database
-const LOCATION_ID = "2a416539-66cc-4d12-a956-22f1d91aa574";
+const LOCATION_ID = "85d3be30-dd4a-4d18-b2c9-d0019db15b92";
 
 // Example location-specific services for a hair salon
 const sampleLocationServices = {

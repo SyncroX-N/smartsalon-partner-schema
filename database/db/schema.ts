@@ -292,7 +292,7 @@ export const user = pgTable(
     operatingHours: jsonb("operatingHours")
       .$type<RegularSchedule>()
       .default(
-        sql`'{"mon":["09:00:00","20:00:00"],"tue":["09:00:00","20:00:00"],"wed":["09:00:00","20:00:00"],"thu":["09:00:00","20:00:00"],"fri":["09:00:00","20:00:00"],"sat":["09:00:00","20:00:00"],"sun":["09:00:00","20:00:00"]}'::jsonb`
+        sql`'{"mon":[{"start":"09:00","end":"20:00"}],"tue":[{"start":"09:00","end":"20:00"}],"wed":[{"start":"09:00","end":"20:00"}],"thu":[{"start":"09:00","end":"20:00"}],"fri":[{"start":"09:00","end":"20:00"}],"sat":[{"start":"09:00","end":"20:00"}],"sun":[{"start":"09:00","end":"20:00"}]}'::jsonb`
       ),
     createdAt: timestamp("createdAt", { withTimezone: true })
       .notNull()
